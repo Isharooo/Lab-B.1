@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "mobappdev.example.nback_cimpl"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "mobappdev.example.nback_cimpl"
         minSdk = 26
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -40,7 +40,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.3"
+        kotlinCompilerExtensionVersion = "1.5.4"
     }
     packaging {
         resources {

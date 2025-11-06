@@ -1,60 +1,29 @@
 package mobappdev.example.nback_cimpl.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import mobappdev.example.nback_cimpl.R
 import mobappdev.example.nback_cimpl.ui.viewmodels.FakeVM
+import mobappdev.example.nback_cimpl.ui.viewmodels.GameType
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameViewModel
-
-/**
- * This is the Home screen composable
- *
- * Currently this screen shows the saved highscore
- * It also contains a button which can be used to show that the C-integration works
- * Furthermore it contains two buttons that you can use to start a game
- *
- * Date: 25-08-2023
- * Version: Version 1.0
- * Author: Yeetivity
- *
- */
 
 @Composable
 fun HomeScreen(
-    vm: GameViewModel
+    vm: GameViewModel,
+    onStartGame: () -> Unit
 ) {
-    val highscore by vm.highscore.collectAsState()  // Highscore is its own StateFlow
-    val gameState by vm.gameState.collectAsState()
+    val highscore by vm.highscore.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackBarHostState) }
@@ -62,83 +31,159 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it),
+                .padding(it)
+                .padding(24.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Title
             Text(
-                modifier = Modifier.padding(32.dp),
-                text = "High-Score = $highscore",
-                style = MaterialTheme.typography.headlineLarge
+                text = "N-Back",
+                style = MaterialTheme.typography.displayLarge,
+                color = MaterialTheme.colorScheme.primary
             )
-            // Todo: You'll probably want to change this "BOX" part of the composable
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
+
+            Text(
+                text = "Memory Game",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Highscore card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
             ) {
                 Column(
-                    Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    if (gameState.eventValue != -1) {
-                        Text(
-                            modifier = Modifier.fillMaxWidth(),
-                            text = "Current eventValue is: ${gameState.eventValue}",
-                            textAlign = TextAlign.Center
-                        )
+                    Text(
+                        text = "High Score",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "$highscore",
+                        style = MaterialTheme.typography.displayLarge
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Game settings card
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Game Settings",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("N-Back value:", style = MaterialTheme.typography.bodyLarge)
+                        Text("${vm.nBack}", style = MaterialTheme.typography.bodyLarge)
                     }
-                    Button(onClick = vm::startGame) {
-                        Text(text = "Generate eventValues")
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Number of events:", style = MaterialTheme.typography.bodyLarge)
+                        Text("${vm.nrOfEvents}", style = MaterialTheme.typography.bodyLarge)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Time between events:", style = MaterialTheme.typography.bodyLarge)
+                        Text("${vm.eventIntervalMs / 1000}s", style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Start buttons
             Text(
-                modifier = Modifier.padding(16.dp),
-                text = "Start Game".uppercase(),
-                style = MaterialTheme.typography.displaySmall
+                text = "Select Mode",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
+
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Button(onClick = {
-                    // Todo: change this button behaviour
-                    scope.launch {
-                        snackBarHostState.showSnackbar(
-                            message = "Hey! you clicked the audio button"
-                        )
-                    }
-                }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.sound_on),
-                        contentDescription = "Sound",
-                        modifier = Modifier
-                            .height(48.dp)
-                            .aspectRatio(3f / 2f)
-                    )
-                }
                 Button(
                     onClick = {
-                        // Todo: change this button behaviour
-                        scope.launch {
-                            snackBarHostState.showSnackbar(
-                                message = "Hey! you clicked the visual button",
-                                duration = SnackbarDuration.Short
-                            )
-                        }
-                    }) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.visual),
-                        contentDescription = "Visual",
-                        modifier = Modifier
-                            .height(48.dp)
-                            .aspectRatio(3f / 2f)
-                    )
+                        vm.setGameType(GameType.Visual)
+                        vm.startGame()
+                        onStartGame()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(80.dp)
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.visual),
+                            contentDescription = "Visual",
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Visual")
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        vm.setGameType(GameType.Audio)
+                        vm.startGame()
+                        onStartGame()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(80.dp),
+                    enabled = false
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.sound_on),
+                            contentDescription = "Audio",
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Audio")
+                    }
                 }
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -146,8 +191,10 @@ fun HomeScreen(
 @Preview
 @Composable
 fun HomeScreenPreview() {
-    // Since I am injecting a VM into my homescreen that depends on Application context, the preview doesn't work.
     Surface(){
-        HomeScreen(FakeVM())
+        HomeScreen(
+            vm = FakeVM(),
+            onStartGame = {}
+        )
     }
 }

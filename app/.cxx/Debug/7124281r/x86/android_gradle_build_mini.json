@@ -1,0 +1,35 @@
+{
+  "buildFiles": [
+    "C:\\Programing\\HI1033\\Lab-B.1\\app\\src\\main\\cpp\\CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "C:\\Users\\ishar\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+      "-C",
+      "C:\\Programing\\HI1033\\Lab-B.1\\app\\.cxx\\Debug\\7124281r\\x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "C:\\Users\\ishar\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe",
+    "-C",
+    "C:\\Programing\\HI1033\\Lab-B.1\\app\\.cxx\\Debug\\7124281r\\x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "nback_cimpl::@6890427a1f51a3e7e1df": {
+      "artifactName": "nback_cimpl",
+      "abi": "x86",
+      "output": "C:\\Programing\\HI1033\\Lab-B.1\\app\\build\\intermediates\\cxx\\Debug\\7124281r\\obj\\x86\\libnback_cimpl.so",
+      "runtimeFiles": []
+    },
+    "JniBridge::@6890427a1f51a3e7e1df": {
+      "artifactName": "JniBridge",
+      "abi": "x86",
+      "output": "C:\\Programing\\HI1033\\Lab-B.1\\app\\build\\intermediates\\cxx\\Debug\\7124281r\\obj\\x86\\libJniBridge.so",
+      "runtimeFiles": [
+        "C:\\Programing\\HI1033\\Lab-B.1\\app\\build\\intermediates\\cxx\\Debug\\7124281r\\obj\\x86\\libnback_cimpl.so"
+      ]
+    }
+  }
+}

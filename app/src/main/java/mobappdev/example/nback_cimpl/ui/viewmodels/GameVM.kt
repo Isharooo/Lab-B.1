@@ -17,32 +17,16 @@ import mobappdev.example.nback_cimpl.GameApplication
 import mobappdev.example.nback_cimpl.NBackHelper
 import mobappdev.example.nback_cimpl.data.UserPreferencesRepository
 
-/**
- * This is the GameViewModel.
- *
- * It is good practice to first make an interface, which acts as the blueprint
- * for your implementation. With this interface we can create fake versions
- * of the viewmodel, which we can use to test other parts of our app that depend on the VM.
- *
- * Our viewmodel itself has functions to start a game, to specify a gametype,
- * and to check if we are having a match
- *
- * Date: 25-08-2023
- * Version: Version 1.0
- * Author: Yeetivity
- *
- */
-
-
 interface GameViewModel {
     val gameState: StateFlow<GameState>
     val score: StateFlow<Int>
     val highscore: StateFlow<Int>
     val nBack: Int
+    val nrOfEvents: Int
+    val eventIntervalMs: Long
 
     fun setGameType(gameType: GameType)
     fun startGame()
-
     fun checkMatch()
 }
 
@@ -61,25 +45,25 @@ class GameVM(
     override val highscore: StateFlow<Int>
         get() = _highscore
 
-    // nBack is currently hardcoded
     override val nBack: Int = 2
+    override val nrOfEvents: Int = 10
+    override val eventIntervalMs: Long = 2000L
 
-    private var job: Job? = null  // coroutine job for the game event
-    private val eventInterval: Long = 2000L  // 2000 ms (2s)
-
-    private val nBackHelper = NBackHelper()  // Helper that generate the event array
-    private var events = emptyArray<Int>()  // Array with all events
+    private var job: Job? = null
+    private val nBackHelper = NBackHelper()
+    private var events = emptyArray<Int>()
+    private var correctResponses = 0
 
     override fun setGameType(gameType: GameType) {
-        // update the gametype in the gamestate
         _gameState.value = _gameState.value.copy(gameType = gameType)
     }
 
     override fun startGame() {
-        job?.cancel()  // Cancel any existing game loop
+        job?.cancel()
+        _score.value = 0
+        correctResponses = 0
 
-        // Get the events from our C-model (returns IntArray, so we need to convert to Array<Int>)
-        events = nBackHelper.generateNBackString(10, 9, 30, nBack).toList().toTypedArray()  // Todo Higher Grade: currently the size etc. are hardcoded, make these based on user input
+        events = nBackHelper.generateNBackString(nrOfEvents, 9, 30, nBack).toList().toTypedArray()
         Log.d("GameVM", "The following sequence was generated: ${events.contentToString()}")
 
         job = viewModelScope.launch {
@@ -88,31 +72,74 @@ class GameVM(
                 GameType.AudioVisual -> runAudioVisualGame()
                 GameType.Visual -> runVisualGame(events)
             }
-            // Todo: update the highscore
         }
     }
 
     override fun checkMatch() {
-        /**
-         * Todo: This function should check if there is a match when the user presses a match button
-         * Make sure the user can only register a match once for each event.
-         */
+        val currentIndex = _gameState.value.eventIndex
+
+        if (currentIndex >= nBack) {
+            val currentValue = events[currentIndex]
+            val nBackValue = events[currentIndex - nBack]
+
+            if (currentValue == nBackValue) {
+                // Korrekt!
+                _score.value = _score.value + 1
+                correctResponses++
+                _gameState.value = _gameState.value.copy(
+                    feedback = FeedbackType.CORRECT,
+                    correctCount = correctResponses
+                )
+            } else {
+                // Fel!
+                _score.value = maxOf(0, _score.value - 1)
+                _gameState.value = _gameState.value.copy(
+                    feedback = FeedbackType.INCORRECT
+                )
+            }
+
+            // Återställ feedback efter kort tid
+            viewModelScope.launch {
+                delay(300)
+                _gameState.value = _gameState.value.copy(feedback = FeedbackType.NONE)
+            }
+        }
     }
+
     private fun runAudioGame() {
-        // Todo: Make work for Basic grade
+        // TODO: Audio implementation
     }
 
     private suspend fun runVisualGame(events: Array<Int>){
-        // Todo: Replace this code for actual game code
-        for (value in events) {
-            _gameState.value = _gameState.value.copy(eventValue = value)
-            delay(eventInterval)
+        _gameState.value = _gameState.value.copy(
+            eventValue = -1,
+            eventIndex = 0,
+            isRunning = true
+        )
+        delay(1000)
+
+        for ((index, value) in events.withIndex()) {
+            _gameState.value = _gameState.value.copy(
+                eventValue = value,
+                eventIndex = index
+            )
+            delay(eventIntervalMs)
         }
 
+        _gameState.value = _gameState.value.copy(
+            eventValue = -1,
+            isRunning = false
+        )
+
+        if (_score.value > _highscore.value) {
+            viewModelScope.launch {
+                userPreferencesRepository.saveHighScore(_score.value)
+            }
+        }
     }
 
     private fun runAudioVisualGame(){
-        // Todo: Make work for Higher grade
+        // TODO: Dual n-back implementation
     }
 
     companion object {
@@ -125,7 +152,6 @@ class GameVM(
     }
 
     init {
-        // Code that runs during creation of the vm
         viewModelScope.launch {
             userPreferencesRepository.highscore.collect {
                 _highscore.value = it
@@ -134,17 +160,25 @@ class GameVM(
     }
 }
 
-// Class with the different game types
 enum class GameType{
     Audio,
     Visual,
     AudioVisual
 }
 
+enum class FeedbackType {
+    NONE,
+    CORRECT,
+    INCORRECT
+}
+
 data class GameState(
-    // You can use this state to push values from the VM to your UI.
-    val gameType: GameType = GameType.Visual,  // Type of the game
-    val eventValue: Int = -1  // The value of the array string
+    val gameType: GameType = GameType.Visual,
+    val eventValue: Int = -1,
+    val eventIndex: Int = 0,
+    val isRunning: Boolean = false,
+    val feedback: FeedbackType = FeedbackType.NONE,
+    val correctCount: Int = 0
 )
 
 class FakeVM: GameViewModel{
@@ -156,13 +190,12 @@ class FakeVM: GameViewModel{
         get() = MutableStateFlow(42).asStateFlow()
     override val nBack: Int
         get() = 2
+    override val nrOfEvents: Int
+        get() = 10
+    override val eventIntervalMs: Long
+        get() = 2000L
 
-    override fun setGameType(gameType: GameType) {
-    }
-
-    override fun startGame() {
-    }
-
-    override fun checkMatch() {
-    }
+    override fun setGameType(gameType: GameType) {}
+    override fun startGame() {}
+    override fun checkMatch() {}
 }
