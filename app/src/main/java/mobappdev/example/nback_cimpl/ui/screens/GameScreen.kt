@@ -12,6 +12,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import mobappdev.example.nback_cimpl.ui.viewmodels.FeedbackType
+import mobappdev.example.nback_cimpl.ui.viewmodels.GameType
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -23,7 +24,6 @@ fun GameScreen(
     val gameState by vm.gameState.collectAsState()
     val score by vm.score.collectAsState()
 
-    // Animation för knapp-feedback
     val buttonScale by animateFloatAsState(
         targetValue = when (gameState.feedback) {
             FeedbackType.CORRECT -> 1.1f
@@ -32,6 +32,8 @@ fun GameScreen(
         },
         label = "buttonScale"
     )
+
+    val letters = listOf("A", "B", "C", "D", "E", "F", "G", "H")
 
     Scaffold(
         topBar = {
@@ -53,7 +55,6 @@ fun GameScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Game info card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -89,42 +90,149 @@ fun GameScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 3x3 Grid
-            Column(
+            // Display based on game type
+            Box(
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
             ) {
-                for (row in 0..2) {
-                    Row(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        for (col in 0..2) {
-                            val position = row * 3 + col + 1
+                when (gameState.gameType) {
+                    GameType.Visual -> {
+                        // Visual grid
+                        Column(
+                            modifier = Modifier
+                                .aspectRatio(1f)
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            for (row in 0 until vm.gridSize) {
+                                Row(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    for (col in 0 until vm.gridSize) {
+                                        val position = row * vm.gridSize + col + 1
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxSize()
+                                                .background(
+                                                    color = if (position == gameState.eventValue) {
+                                                        MaterialTheme.colorScheme.primary
+                                                    } else {
+                                                        MaterialTheme.colorScheme.surfaceVariant
+                                                    },
+                                                    shape = RoundedCornerShape(12.dp)
+                                                )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    GameType.Audio -> {
+                        // Audio display
+                        Card(
+                            modifier = Modifier
+                                .size(200.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (gameState.audioValue > 0) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceVariant
+                                }
+                            )
+                        ) {
                             Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = if (gameState.audioValue > 0) {
+                                        letters[gameState.audioValue - 1]
+                                    } else {
+                                        "🔊"
+                                    },
+                                    style = MaterialTheme.typography.displayLarge
+                                )
+                            }
+                        }
+                    }
+                    GameType.AudioVisual -> {
+                        // Dual mode - split screen
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            // Visual half
+                            Column(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .fillMaxSize()
-                                    .background(
-                                        color = if (position == gameState.eventValue) {
-                                            MaterialTheme.colorScheme.primary
+                                    .aspectRatio(1f),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                for (row in 0 until vm.gridSize) {
+                                    Row(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        for (col in 0 until vm.gridSize) {
+                                            val position = row * vm.gridSize + col + 1
+                                            Box(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .fillMaxSize()
+                                                    .background(
+                                                        color = if (position == gameState.eventValue) {
+                                                            MaterialTheme.colorScheme.primary
+                                                        } else {
+                                                            MaterialTheme.colorScheme.surfaceVariant
+                                                        },
+                                                        shape = RoundedCornerShape(8.dp)
+                                                    )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Audio half
+                            Card(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .aspectRatio(1f),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (gameState.audioValue > 0) {
+                                        MaterialTheme.colorScheme.secondary
+                                    } else {
+                                        MaterialTheme.colorScheme.surfaceVariant
+                                    }
+                                )
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = if (gameState.audioValue > 0) {
+                                            letters[gameState.audioValue - 1]
                                         } else {
-                                            MaterialTheme.colorScheme.surfaceVariant
+                                            "🔊"
                                         },
-                                        shape = RoundedCornerShape(12.dp)
+                                        style = MaterialTheme.typography.displayLarge
                                     )
-                            )
+                                }
+                            }
                         }
                     }
                 }
             }
 
-            // Match button med feedback
             Button(
                 onClick = { vm.checkMatch() },
                 modifier = Modifier

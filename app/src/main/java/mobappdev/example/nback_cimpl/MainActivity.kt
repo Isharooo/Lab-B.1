@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import mobappdev.example.nback_cimpl.ui.screens.GameScreen
 import mobappdev.example.nback_cimpl.ui.screens.HomeScreen
+import mobappdev.example.nback_cimpl.ui.screens.SettingsScreen
 import mobappdev.example.nback_cimpl.ui.theme.NBack_CImplTheme
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameVM
 
@@ -27,18 +28,24 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val gameViewModel: GameVM = viewModel(factory = GameVM.Factory)
-
-                    // Enkel navigation state
                     var currentScreen by remember { mutableStateOf("home") }
 
                     when (currentScreen) {
                         "home" -> HomeScreen(
                             vm = gameViewModel,
-                            onStartGame = { currentScreen = "game" }
+                            onStartGame = { currentScreen = "game" },
+                            onNavigateToSettings = { currentScreen = "settings" }
                         )
                         "game" -> GameScreen(
                             vm = gameViewModel,
                             onNavigateBack = { currentScreen = "home" }
+                        )
+                        "settings" -> SettingsScreen(
+                            vm = gameViewModel,
+                            onNavigateBack = { currentScreen = "home" },
+                            onSaveSettings = { n, events, interval, grid ->
+                                gameViewModel.saveSettings(n, events, interval, grid)
+                            }
                         )
                     }
                 }

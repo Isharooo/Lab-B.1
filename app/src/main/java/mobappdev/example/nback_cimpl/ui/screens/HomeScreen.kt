@@ -9,7 +9,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mobappdev.example.nback_cimpl.R
@@ -20,7 +19,8 @@ import mobappdev.example.nback_cimpl.ui.viewmodels.GameViewModel
 @Composable
 fun HomeScreen(
     vm: GameViewModel,
-    onStartGame: () -> Unit
+    onStartGame: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val highscore by vm.highscore.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -36,7 +36,6 @@ fun HomeScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Title
             Text(
                 text = "N-Back",
                 style = MaterialTheme.typography.displayLarge,
@@ -51,7 +50,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Highscore card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -77,7 +75,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Game settings card
             Card(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -86,17 +83,27 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .padding(16.dp)
                 ) {
-                    Text(
-                        text = "Game Settings",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Current Settings",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        TextButton(onClick = onNavigateToSettings) {
+                            Text("Edit")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("N-Back value:", style = MaterialTheme.typography.bodyLarge)
+                        Text("N-Back:", style = MaterialTheme.typography.bodyLarge)
                         Text("${vm.nBack}", style = MaterialTheme.typography.bodyLarge)
                     }
 
@@ -106,7 +113,7 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Number of events:", style = MaterialTheme.typography.bodyLarge)
+                        Text("Events:", style = MaterialTheme.typography.bodyLarge)
                         Text("${vm.nrOfEvents}", style = MaterialTheme.typography.bodyLarge)
                     }
 
@@ -116,15 +123,24 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Time between events:", style = MaterialTheme.typography.bodyLarge)
+                        Text("Interval:", style = MaterialTheme.typography.bodyLarge)
                         Text("${vm.eventIntervalMs / 1000}s", style = MaterialTheme.typography.bodyLarge)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Grid:", style = MaterialTheme.typography.bodyLarge)
+                        Text("${vm.gridSize}x${vm.gridSize}", style = MaterialTheme.typography.bodyLarge)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Start buttons
             Text(
                 text = "Select Mode",
                 style = MaterialTheme.typography.titleLarge,
@@ -133,7 +149,7 @@ fun HomeScreen(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
                     onClick = {
@@ -148,13 +164,8 @@ fun HomeScreen(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.visual),
-                            contentDescription = "Visual",
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("Visual")
+                        Text(text = "Visual", style = MaterialTheme.typography.titleMedium)
+
                     }
                 }
 
@@ -166,19 +177,29 @@ fun HomeScreen(
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .height(80.dp),
-                    enabled = false
+                        .height(80.dp)
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.sound_on),
-                            contentDescription = "Audio",
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text("Audio")
+                        Text(text = "Audio", style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        vm.setGameType(GameType.AudioVisual)
+                        vm.startGame()
+                        onStartGame()
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(80.dp)
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = "Dual", style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
@@ -194,7 +215,8 @@ fun HomeScreenPreview() {
     Surface(){
         HomeScreen(
             vm = FakeVM(),
-            onStartGame = {}
+            onStartGame = {},
+            onNavigateToSettings = {}
         )
     }
 }
